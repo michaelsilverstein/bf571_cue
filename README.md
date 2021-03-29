@@ -1,3 +1,3 @@
 # BF571 CUE
 
-Here we will do cool stuff with CUE
+1. [cue_tools.py](cue_tools.py): Shared script for functions
