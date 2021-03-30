@@ -49,8 +49,8 @@ def computeCUE(model, biomass_rxn, co2_rxn):
     
     Example:
     # Load model
-    url = 'http://bigg.ucsd.edu/static/models/e_coli_core.xml'
-    model = loadModelURL(url)
+    url = 'http://bigg.ucsd.edu/static/models/e_coli_core.mat'
+    model = loadModelURL(url, 'mat')
     # Calculate cue
     cue = computeCUE(model, 'BIOMASS_Ecoli_core_w_GAM', 'EX_co2_e')
     """
