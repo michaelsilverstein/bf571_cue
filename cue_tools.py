@@ -5,11 +5,11 @@ import os
 
 def loadModelURL(url, fmt):
     """
-    Load SMBL cobra model from a URL
+    Load a cobra model from a URL
     Inputs:
     | url <str>: URL to metabolic model
     | fmt <str>: Format of metabolic model 
-        options: {'smbl', 'json', 'mat'}
+        options: {'sbml', 'json', 'mat'}
     Outputs:
     | model: cobra model
     
@@ -20,10 +20,10 @@ def loadModelURL(url, fmt):
     
     2)
     url = 'http://bigg.ucsd.edu/static/models/e_coli_core.xml'
-    model = loadModelURL(url, 'smbl')
+    model = loadModelURL(url, 'sbml')
     """
     # Select load function
-    load_functions = {'smbl': cobra.io.read_sbml_model,
+    load_functions = {'sbml': cobra.io.read_sbml_model,
                       'json': cobra.io.load_json_model,
                       'mat': cobra.io.load_matlab_model}
     if fmt not in load_functions:
