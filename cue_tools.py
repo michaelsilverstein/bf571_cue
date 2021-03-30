@@ -3,18 +3,38 @@ import cobra
 import requests
 import os
 
-def loadModelURL(url):
+def loadModelURL(url, fmt):
     """
     Load SMBL cobra model from a URL
+    Inputs:
+    | url <str>: URL to metabolic model
+    | fmt <str>: Format of metabolic model 
+        options: {'smbl', 'json', 'mat'}
+    Outputs:
+    | model: cobra model
     
     Example: 
+    1)
+    url = 'http://bigg.ucsd.edu/static/models/e_coli_core.mat'
+    model = loadModelURL(url, 'mat')
+    
+    2)
     url = 'http://bigg.ucsd.edu/static/models/e_coli_core.xml'
-    model = loadModelURL(url)
+    model = loadModelURL(url, 'smbl')
     """
-    with tempfile.NamedTemporaryFile('w', delete=False) as tf:
-        handle = requests.get(url)
-        tf.write(handle.text)
-        model = cobra.io.read_sbml_model(tf.name)
+    # Select load function
+    load_functions = {'smbl': cobra.io.read_sbml_model,
+                      'json': cobra.io.load_json_model,
+                      'mat': cobra.io.load_matlab_model}
+    if fmt not in load_functions:
+        raise KeyError(f'{fmt} is not a valid format. Choose from {set(load_functions.keys())}')
+    load_function = load_functions[fmt]
+    
+    # Load model from URL
+    with tempfile.NamedTemporaryFile(delete=False) as tf:
+        resp = requests.get(url)
+        tf.write(resp.content)
+        model = load_function(tf.name)
     os.remove(tf.name)
     return model
 
