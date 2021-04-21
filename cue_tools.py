@@ -91,44 +91,41 @@ def computeEpistasis (model,objective_func = "default",heatmap = False, labels =
     solution = model.optimize()
     wt_grow = solution.objective_value
     
-    ## knock-outs loop ##
+    ## knock-outs loops ##
     # initialize empty matricies
     rxns = len(model.reactions)
-    
-    v1_grow = np.zeros((rxns,rxns))
-    v2_grow = np.zeros((rxns,rxns))
+    single_ko = np.zeros((rxns))
     v1v2_grow = np.zeros((rxns,rxns))
+
+    ## Single knockouts ##
+    for i in range(rxns):
+        #buffer
+        upper_i = model.reactions[i].upper_bound
+        lower_i = model.reactions[i].lower_bound
+        # set upper and lower bounds to zero
+        model.reactions[i].upper_bound = 0
+        model.reactions[i].lower_bound = 0
+        # solve model and record growth rate
+        solution = model.optimize()
+        single_ko[i] = solution.objective_value
+        # return bounds to their previous state
+        model.reactions[i].upper_bound = upper_i
+        model.reactions[i].lower_bound = lower_i
+    
+    ## Combo knockout ##
     for i in range(rxns):
         for j in range(rxns):
             if j > i:
-                # Buffer variables
+                #buffer
                 upper_i = model.reactions[i].upper_bound
                 lower_i = model.reactions[i].lower_bound
                 upper_j = model.reactions[j].upper_bound
                 lower_j = model.reactions[j].lower_bound
-
-                ## first reaction knock out ##
-                # set upper and lower bounds to zero
+                # Set bounds on rxns to zero, now both are zero
                 model.reactions[i].upper_bound = 0
                 model.reactions[i].lower_bound = 0
-                # solve model and record growth rate
-                solution = model.optimize()
-                v1_grow[i,j] = solution.objective_value
-                # return bounds to their previous state
-                model.reactions[i].upper_bound = upper_i
-                model.reactions[i].lower_bound = lower_i
-
-                ## Second rection knock out ##
                 model.reactions[j].upper_bound = 0
                 model.reactions[j].lower_bound = 0
-                # Solve model and record growth rate
-                solution = model.optimize()
-                v2_grow[i,j] = solution.objective_value
-
-                ## combo knock out ##
-                # Set bounds on other rxn to zero, now both are zero
-                model.reactions[i].upper_bound = 0
-                model.reactions[i].lower_bound = 0
                 # Solve
                 solution = model.optimize()
                 v1v2_grow[i,j] = solution.objective_value
@@ -138,6 +135,11 @@ def computeEpistasis (model,objective_func = "default",heatmap = False, labels =
                 model.reactions[j].upper_bound = upper_j
                 model.reactions[j].lower_bound = lower_j
 
+    #adjusting matricies 
+    v1_grow = single_ko + np.zeros((rxns,rxns))
+    v2_grow = np.transpose(v1_grow)
+    np.fill_diagonal(v1v2_grow,single_ko)
+    
     # distribution of epistatic interactions
     epistasis = (v1v2_grow/wt_grow) - ((v1_grow/wt_grow) * (v2_grow/wt_grow))
     ep_dist = epistasis[np.triu_indices(rxns,1)]
