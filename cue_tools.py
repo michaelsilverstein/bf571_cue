@@ -164,6 +164,8 @@ def computeEpistasis (model,objective_func = "default",heatmap = False, labels =
     
     return(ep_dist)
 
+
+
 def CUEDef(model):
     
     
@@ -209,18 +211,24 @@ def CUEDef(model):
         
             CUE22 = SecretionSummary.loc[L,'flux'].values
         
-    FinalCUE2 = float((CUE1 + CUE22)/CUE1)
+    FinalCUE2 = (CUE1 + CUE22)/CUE1
     
     # Third CUE Definition
+    SFC = SecretionSummary[SecretionSummary['C-Number']>0].index.values
+
+    CUE23 = 0
+    for n in SFC:
     
+        CUE23 = CUE23 + SecretionSummary.loc[n,'flux']
+        
     solution = model.optimize()
     BiomassProd = solution.objective_value
-    CUE23 = -CUE2 + BiomassProd
-    FinalCUE3 = BiomassProd/(CUE23)
+    CUETot = -CUE23 + BiomassProd
+    FinalCUE3 = BiomassProd/(CUETot)
     
     # Fourth CUE Definition
     
-    FinalCUE4 = float((BiomassProd)/(BiomassProd - CUE22))
+    FinalCUE4 = (BiomassProd)/(BiomassProd - CUE22)
     
     FinalCUETab = pd.DataFrame(np.array([[FinalCUE1],[FinalCUE2],[FinalCUE3],[FinalCUE4]]), columns = ['CUE'],index = ['Def 1','Def 2','Def 3','Def 4'])
     
