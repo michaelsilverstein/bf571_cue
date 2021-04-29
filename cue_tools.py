@@ -216,19 +216,59 @@ def CUEDef(model):
     # Third CUE Definition
     SFC = SecretionSummary[SecretionSummary['C-Number']>0].index.values
 
-    CUE23 = 0
+    CUE3 = 0
     for n in SFC:
     
-        CUE23 = CUE23 + SecretionSummary.loc[n,'flux']
+        CUE3 = CUE3 + SecretionSummary.loc[n,'flux']
+    # Finding Where the Biomass Reaction Is    
+    for n in model.reactions:
+    
+        temp_react = n.id
+    
+        if "BIOMASS" in temp_react or "biomass" in temp_react:
         
-    solution = model.optimize()
-    BiomassProd = solution.objective_value
-    CUETot = -CUE23 + BiomassProd
-    FinalCUE3 = BiomassProd/(CUETot)
+            print("Found")
+            BIO_id = temp_react
+        
+    
+    # Finding the Metabolites Involved in Biomass Reaction 
+    BiomassMeta = getattr(model.reactions,BIO_id).reactants
+    # Then Finding the Carbons Associated with Them 
+    # and Isolating Their Fluxes 
+    Fluxes = np.empty(shape = [0], dtype = float)
+    Carbons = np.empty(shape = [0], dtype = float)
+    
+    for n in BiomassMeta:
+    
+        temp_df = n.summary().consuming_flux
+        
+        BLoc = temp_df.index.get_loc(BIO_id)
+        
+        tempflux = temp_df.iloc[BLoc,0]
+        
+        Fluxes = np.append(Fluxes, tempflux)
+    
+    # Getting the Number of Carbons Per Flux 
+    
+        temp_dic = n.elements
+    
+        if "C" in temp_dic:
+        
+            CNum = float(temp_dic["C"])
+            Carbons = np.append(Carbons,CNum)
+        
+        else: 
+        
+            CNum = 0.0
+            Carbons = np.append(Carbons, CNum)
+    
+    net_cflux = np.sum(np.multiply(Fluxes, Carbons))
+    
+    FinalCUE3 = net_cflux/(net_cflux + CUE3)
     
     # Fourth CUE Definition
     
-    FinalCUE4 = float((BiomassProd)/(BiomassProd - CUE22))
+    FinalCUE4 = float((net_cflux)/(net_cflux + CUE22))
     
     FinalCUETab = pd.DataFrame(np.array([[FinalCUE1],[FinalCUE2],[FinalCUE3],[FinalCUE4]]), columns = ['CUE'],index = ['Def 1','Def 2','Def 3','Def 4'])
     
